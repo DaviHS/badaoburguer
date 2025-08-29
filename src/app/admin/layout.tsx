@@ -10,6 +10,8 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
   const session = await auth()
   if (!session?.user) redirect("/sign-in?from=/admin")
 
+  if (!session.user.isAdmin) redirect("/")
+
   return (
     <div className="[--header-height:calc(theme(spacing.14))]">
       <SidebarProvider className="flex flex-col h-full">
@@ -17,7 +19,7 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
         <div className="flex flex-1 h-full">
           <AppSidebar />
           <div className="flex-1 overflow-auto font-sans">
-            <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 bg-gray-50">
+            <div className="mx-auto w-full px-4 sm:px-4 lg:px-6 bg-gray-50">
               <PageContent>{children}</PageContent>
             </div>
           </div>

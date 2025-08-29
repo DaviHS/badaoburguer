@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import Fields from "./fields"
 import { Lock } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function Form() {
   const router = useRouter()
+  const { toast } = useToast()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -31,11 +33,30 @@ export default function Form() {
 
       if (result?.error) {
         setError("Credenciais inválidas. Por favor, tente novamente.")
+        toast({
+          title: "Erro de Login",
+          description: "Credenciais inválidas. Verifique seus dados e tente novamente.",
+          variant: "destructive",
+        })
       } else {
-        router.push("/admin")
+        const sessionRes = await fetch("/api/auth/session")
+        const session = await sessionRes.json()
+
+        if (session?.user?.isAdmin) {
+          router.push("/admin")
+          toast({ title: "Login realizado", description: "Bem-vindo de volta." })
+        } else {
+          router.push("/")
+          toast({ title: "Login realizado", description: "Bem-vindo ao site." })
+        }
       }
     } catch {
       setError("Ocorreu um erro ao fazer login. Por favor, tente novamente.")
+      toast({
+        title: "Erro de Servidor",
+        description: "Ocorreu um erro ao tentar se conectar. Tente novamente mais tarde.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -49,14 +70,16 @@ export default function Form() {
             <Lock className="h-8 w-8 text-primary-foreground" />
           </div>
           <CardTitle className="font-playfair text-2xl">Acesso Administrativo</CardTitle>
-          <p className="text-muted-foreground">Digite a senha para acessar o painel</p>
+          <p className="text-muted-foreground">Digite a senha para acessar as informações</p>
         </CardHeader>
+
         <CardContent className="space-y-4">
           {error && (
             <div className="p-3 bg-red-100 text-red-600 text-sm rounded">
               {error}
             </div>
           )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <Fields
               email={email}
@@ -71,6 +94,7 @@ export default function Form() {
             </Button>
           </form>
         </CardContent>
+
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-center text-sm">
             <span className="text-gray-500">Perdeu o Acesso? </span>

@@ -11,7 +11,7 @@ import { eq } from "drizzle-orm";
 
 import { signInSchema } from "@/validators/auth";
 import { db } from "@/server/db";
-import { users } from "@/server/db/schema";
+import { userRoles, users } from "@/server/db/schema";
 import { compare } from "bcrypt-ts";
 
 class InvalidLoginError extends CredentialsSignin {
@@ -29,6 +29,8 @@ declare module "@auth/core/jwt" {
     userId: number;
     fullName: string;
     email: string;
+    roleId: number;
+    isAdmin: boolean;
   }
 }
 
@@ -51,9 +53,8 @@ declare module "next-auth" {
     userId: number;
     fullName: string;
     email: string;
-    enrollmentNumber: string,
-    // ...other properties
-    // role: UserRole;
+    roleId: number;
+    isAdmin: boolean;
   }
 }
 
@@ -65,7 +66,7 @@ declare module "next-auth" {
 export const authConfig = {
   pages: {
     signOut: `/sign-in`,
-    signIn: `/admin`,
+    signIn: `/`,
   },
   trustHost: true,
   session: { 
@@ -85,8 +86,16 @@ export const authConfig = {
         const { email, password } = await signInSchema.parseAsync(credentials);
 
         const [user] = await db
-          .select()
+          .select({
+            userId: users.userId,
+            fullName: users.fullName,
+            email: users.email,
+            roleId: users.roleId,
+            passwordHash: users.passwordHash,
+            isAdmin: userRoles.isAdmin,
+          })
           .from(users)
+          .leftJoin(userRoles, eq(users.roleId, userRoles.roleId))
           .where(eq(users.email, email))
           .limit(1);
 
@@ -103,8 +112,9 @@ export const authConfig = {
         return {
           userId: user.userId,
           fullName: user.fullName,
-          email: user.email ?? "",
-          enrollmentNumber: user.enrollmentNumber ?? "",
+          email: user.email,
+          roleId: user.roleId!,
+          isAdmin: user.isAdmin!
         } satisfies User;
       },
     }),
@@ -137,6 +147,8 @@ export const authConfig = {
           userId: token.userId,
           fullName: token.fullName,
           email: token.email,
+          roleId: token.roleId,
+          isAdmin: token.isAdmin,
         },
       };
     },

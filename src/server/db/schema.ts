@@ -8,7 +8,9 @@ export const users = pgTable("users", {
   cpf: varchar("cpf", { length: 14 }),
   birthDate: timestamp("birth_date", { mode: "date" }),
   status: smallint("status").default(1), // 0=inativo, 1=ativo
-  type: smallint("type").default(0), // 0=cliente, 1=admin
+  roleId: integer("role_id")
+    .references(() => userRoles.roleId)
+    .default(3),
   passwordHash: varchar("password_hash", { length: 100 }).notNull(),
   passwordCreatedAt: timestamp("password_created_at", { mode: "date", withTimezone: true }),
   passwordUpdatedAt: timestamp("password_updated_at", { mode: "date", withTimezone: true }),
@@ -19,6 +21,15 @@ export const users = pgTable("users", {
   resetToken: varchar("reset_token", { length: 100 }),
   resetTokenExpires: timestamp("reset_token_expires", { mode: "date", withTimezone: true }),
 })
+
+export const userRoles = pgTable("user_roles", {
+  roleId: serial("role_id").primaryKey(),
+  name: varchar("name", { length: 50 }).notNull().unique(),
+  description: text("description"),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow(),
+});
 
 export const categories = pgTable("categories", {
   categoryId: serial("category_id").primaryKey(),

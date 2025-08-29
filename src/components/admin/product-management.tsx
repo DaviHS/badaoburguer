@@ -3,29 +3,39 @@
 import { useState, useEffect } from "react"
 import { api } from "@/trpc/react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
 import { Plus, Edit, Trash2, Ham } from "lucide-react"
 import Image from "next/image"
 import { Product } from "@/types"
+import { LoadingSkeleton } from "@/components/shared/loading"
+import { formatCurrency } from "@/lib/utils/price"
+import { toast } from "sonner"
 
 export function ProductManagement() {
-  const { data: products = [], refetch: refetchProducts } = api.product.list.useQuery()
-  const { data: categories = [] } = api.category.list.useQuery()
+  const { data: products = [], refetch: refetchProducts, isLoading: productsLoading } = api.product.list.useQuery()
+  const { data: categories = [], isLoading: categoriesLoading } = api.category.list.useQuery()
   const createProduct = api.product.create.useMutation({ onSuccess: () => refetchProducts() })
   const updateProduct = api.product.update.useMutation({ onSuccess: () => refetchProducts() })
   const deleteProduct = api.product.delete.useMutation({ onSuccess: () => refetchProducts() })
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [formData, setFormData] = useState({ name: "", description: "", price: "", categoryId: 0})
+  const [formData, setFormData] = useState({ name: "", description: "", price: "", categoryId: 0 })
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", price: "", categoryId: categories?.[0]?.categoryId || 0})
+    setFormData({ name: "", description: "", price: "", categoryId: categories?.[0]?.categoryId || 0 })
   }
 
   const handleOpenDialog = (product?: Product) => {
@@ -45,17 +55,38 @@ export function ProductManagement() {
   }
 
   const handleSave = async () => {
-    if (!formData.name || !formData.price || !formData.categoryId) return
+    if (!formData.name || !formData.price || !formData.categoryId) {
+      toast.error("Preencha todos os campos obrigatórios.")
+      return
+    }
+
     const payload = { ...formData, price: parseFloat(formData.price) }
-    if (editingProduct) await updateProduct.mutateAsync({ productId: editingProduct.productId, ...payload })
-    else await createProduct.mutateAsync(payload)
-    setEditingProduct(null)
-    setIsDialogOpen(false)
-    resetForm()
+    const toastId = toast.loading("Atualizando...")
+
+    try {
+      if (editingProduct) {
+        await updateProduct.mutateAsync({ productId: editingProduct.productId, ...payload })
+        toast.success("Produto atualizado com sucesso!", { id: toastId })
+      } else {
+        await createProduct.mutateAsync(payload)
+        toast.success("Produto criado com sucesso!", { id: toastId })
+      }
+      setEditingProduct(null)
+      setIsDialogOpen(false)
+      resetForm()
+    } catch {
+      toast.error("Falha ao salvar produto.", { id: toastId })
+    }
   }
 
   const handleDelete = async (id: number) => {
-    if (confirm("Tem certeza que deseja excluir este produto?")) await deleteProduct.mutateAsync({ productId: id })
+    const toastId = toast.loading("Atualizando...")
+    try {
+      await deleteProduct.mutateAsync({ productId: id })
+      toast.success("Produto excluído com sucesso.", { id: toastId })
+    } catch {
+      toast.error("Não foi possível excluir o produto.", { id: toastId })
+    }
   }
 
   useEffect(() => { if (categories?.length) resetForm() }, [categories])
@@ -123,54 +154,76 @@ export function ProductManagement() {
         </CardHeader>
 
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {products.map((product) => (
-              <Card key={product.productId} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardHeader className="p-0">
-                  <div className="relative h-48 w-full">
-                    <Image
-                      src={"/placeholder.svg"}
-                      alt={product.name}
-                      className="object-cover"
-                      fill
-                    />
-                  </div>
-                </CardHeader>
+          {productsLoading || categoriesLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <LoadingSkeleton key={i} className="h-64" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {products.map((product) => (
+                <Card key={product.productId} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <CardHeader className="p-0">
+                    <div className="relative h-48 w-full">
+                      <Image
+                        src={"/placeholder.svg"}
+                        alt={product.name}
+                        className="object-cover"
+                        fill
+                      />
+                    </div>
+                  </CardHeader>
 
-                <CardContent className="p-4 space-y-2">
-                  <h4 className="font-semibold truncate">{product.name}</h4>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-primary">
-                      R$ {parseFloat(product.price).toFixed(2).replace(".", ",")}
-                    </span>
-                    <Badge variant="outline">
-                      {categories.find(c => c.categoryId === (product.categoryId ?? 0))?.name}
-                    </Badge>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenDialog({ ...product, categoryId: product.categoryId ?? 0 })}
-                      className="flex-1"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(product.productId)}
-                      className="flex-1 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-          </div>
+                  <CardContent className="p-4 space-y-2">
+                    <h4 className="font-semibold truncate">{product.name}</h4>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-primary">
+                        {formatCurrency(product.price)}
+                      </span>
+                      <Badge variant="outline">
+                        {categories.find(c => c.categoryId === (product.categoryId ?? 0))?.name}
+                      </Badge>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenDialog({ ...product, categoryId: product.categoryId ?? 0 })}
+                        className="flex-1"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir Produto?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir o produto "{product.name}"? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="flex gap-2">
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(product.productId)}>Excluir</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

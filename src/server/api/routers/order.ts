@@ -1,23 +1,90 @@
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc"
 import { db } from "@/server/db"
-import { orders, orderItems, products, orderStatus } from "@/server/db/schema"
-import { eq } from "drizzle-orm"
+import { orders, orderItems, products, orderStatus, users } from "@/server/db/schema"
+import { eq, desc } from "drizzle-orm"
 import { z } from "zod"
 
 export const orderRouter = createTRPCRouter({
   list: publicProcedure.query(async () => {
-    return await db.select().from(orders).orderBy(orders.createdAt)
+    const ordersWithDetails = await db
+      .select({
+        orderId: orders.orderId,
+        userId: orders.userId,
+        total: orders.total,
+        status: orders.status,
+        createdAt: orders.createdAt,
+        updatedAt: orders.updatedAt,
+        statusName: orderStatus.name,
+        statusDescription: orderStatus.description,
+        customerName: users.fullName,
+        customerPhone: users.phone,
+        customerEmail: users.email,
+      })
+      .from(orders)
+      .leftJoin(orderStatus, eq(orders.status, orderStatus.statusId))
+      .leftJoin(users, eq(orders.userId, users.userId))
+      .orderBy(desc(orders.createdAt))
+
+    const ordersWithItems = await Promise.all(
+      ordersWithDetails.map(async (order) => {
+        const items = await db
+          .select({
+            orderItemId: orderItems.orderItemId,
+            productId: orderItems.productId,
+            quantity: orderItems.quantity,
+            price: orderItems.price,
+            productName: products.name,
+          })
+          .from(orderItems)
+          .leftJoin(products, eq(orderItems.productId, products.productId))
+          .where(eq(orderItems.orderId, order.orderId))
+
+        return {
+          ...order,
+          items,
+        }
+      }),
+    )
+
+    return ordersWithItems
   }),
 
-  getById: publicProcedure
-    .input(z.object({ orderId: z.number() }))
-    .query(async ({ input }) => {
-      const result = await db.select().from(orders).where(eq(orders.orderId, input.orderId))
-      const order = result[0]
-      if (!order) throw new Error("Pedido não encontrado")
-      const items = await db.select().from(orderItems).where(eq(orderItems.orderId, input.orderId))
-      return { ...order, items }
-    }),
+  getById: publicProcedure.input(z.object({ orderId: z.number() })).query(async ({ input }) => {
+    const orderDetails = await db
+      .select({
+        orderId: orders.orderId,
+        userId: orders.userId,
+        total: orders.total,
+        status: orders.status,
+        createdAt: orders.createdAt,
+        updatedAt: orders.updatedAt,
+        statusName: orderStatus.name,
+        customerName: users.fullName,
+        customerPhone: users.phone,
+        customerEmail: users.email,
+      })
+      .from(orders)
+      .leftJoin(orderStatus, eq(orders.status, orderStatus.statusId))
+      .leftJoin(users, eq(orders.userId, users.userId))
+      .where(eq(orders.orderId, input.orderId))
+
+    const order = orderDetails[0]
+    if (!order) throw new Error("Pedido não encontrado")
+
+    const items = await db
+      .select({
+        orderItemId: orderItems.orderItemId,
+        productId: orderItems.productId,
+        quantity: orderItems.quantity,
+        price: orderItems.price,
+        productName: products.name,
+      })
+      .from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.productId))
+      .where(eq(orderItems.orderId, input.orderId))
+
+    return { ...order, items }
+  }),
 
   create: publicProcedure
     .input(
@@ -33,29 +100,39 @@ export const orderRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       let total = 0
+
+      // Validar produtos e calcular total
       for (const item of input.items) {
         const productsFound = await db.select().from(products).where(eq(products.productId, item.productId))
+
         const product = productsFound[0]
         if (!product) throw new Error(`Produto ${item.productId} não encontrado`)
+        if (product.stock < item.quantity) {
+          throw new Error(`Estoque insuficiente para ${product.name}`)
+        }
+
         total += Number(product.price) * item.quantity
       }
 
+      // Criar pedido
       const createdOrders = await db
         .insert(orders)
         .values({
           userId: input.userId,
           total: total.toString(),
-          status: 0,
+          status: 0, // Pendente
         })
         .returning()
 
       const order = createdOrders[0]
       if (!order) throw new Error("Falha ao criar pedido")
 
+      // Criar itens do pedido e atualizar estoque
       for (const item of input.items) {
         const productsFound = await db.select().from(products).where(eq(products.productId, item.productId))
+
         const product = productsFound[0]
-        if (!product) throw new Error(`Produto ${item.productId} não encontrado`)
+        if (!product) continue
 
         await db.insert(orderItems).values({
           orderId: order.orderId,
@@ -81,13 +158,19 @@ export const orderRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
+      // Validar se status existe
       const statuses = await db.select().from(orderStatus).where(eq(orderStatus.statusId, input.statusId))
+
       const status = statuses[0]
       if (!status) throw new Error("Status inválido")
 
+      // Atualizar pedido
       const updatedOrders = await db
         .update(orders)
-        .set({ status: input.statusId })
+        .set({
+          status: input.statusId,
+          updatedAt: new Date(),
+        })
         .where(eq(orders.orderId, input.orderId))
         .returning()
 
@@ -97,11 +180,13 @@ export const orderRouter = createTRPCRouter({
       return { success: true, order }
     }),
 
-  delete: publicProcedure
-    .input(z.object({ orderId: z.number() }))
-    .mutation(async ({ input }) => {
-      await db.delete(orderItems).where(eq(orderItems.orderId, input.orderId))
-      await db.delete(orders).where(eq(orders.orderId, input.orderId))
-      return { success: true }
-    }),
+  getStatuses: publicProcedure.query(async () => {
+    return await db.select().from(orderStatus).orderBy(orderStatus.statusId)
+  }),
+
+  delete: publicProcedure.input(z.object({ orderId: z.number() })).mutation(async ({ input }) => {
+    await db.delete(orderItems).where(eq(orderItems.orderId, input.orderId))
+    await db.delete(orders).where(eq(orders.orderId, input.orderId))
+    return { success: true }
+  }),
 })

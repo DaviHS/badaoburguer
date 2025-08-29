@@ -5,6 +5,7 @@ import { orderRouter } from "./routers/order";
 import { productRouter } from "./routers/product";
 import { categoryRouter } from "./routers/category";
 import { productImageRouter } from "./routers/product-image";
+import { userRoleRouter } from "./routers/user-role";
 
 /**
  * This is the primary router for your server.
@@ -14,6 +15,7 @@ import { productImageRouter } from "./routers/product-image";
 export const appRouter = createTRPCRouter({
   auth: authRouter,
   user: userRouter,
+  userRoles: userRoleRouter,
   product: productRouter,
   productImage: productImageRouter,
   category: categoryRouter,

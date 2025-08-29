@@ -39,3 +39,13 @@
     url: string
     order: number
   }
+
+  export interface UserForm {
+    fullName: string
+    email: string
+    phone: string
+    cpf: string
+    birthDate: string
+    roleId: number
+    password: string
+  }

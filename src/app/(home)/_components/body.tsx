@@ -1,12 +1,8 @@
 "use client"
 
 import { Hero } from "@/components/home/hero"
-import { 
-  Header, 
-  ProductGrid, 
-  Cart, 
-  Footer
-} from "@/components/home/index"
+import { Header, ProductGrid, Footer } from "@/components/home/index"
+import Cart from "@/components/home/cart"
 
 export const Body = () => {
   return (

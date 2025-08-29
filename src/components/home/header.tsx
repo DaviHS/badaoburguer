@@ -3,10 +3,17 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingCart, Menu, X } from "lucide-react"
+import { ShoppingCart, Menu, X, User, UserPlus, Settings, LogIn, Package } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import Image from "next/image"
 import Cart from "./cart"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export default function Header() {
   const { state } = useCart()
@@ -49,12 +56,58 @@ export default function Header() {
           </div>
 
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#home" className="text-white hover:text-yellow-400 transition-colors">Início</a>
+            <a href="" className="text-white hover:text-yellow-400 transition-colors">Início</a>
             <a href="#produtos" className="text-white hover:text-yellow-400 transition-colors">Produtos</a>
-            <a href="/admin" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm">Admin</a>
           </nav>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="relative flex items-center gap-2 bg-transparent border-white 
+                    text-white hover:bg-white hover:text-[#4d0f2e] transition-colors hidden md:flex"
+                >
+                  <User className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <a href="/cadastro" className="flex items-center gap-2 cursor-pointer">
+                    <UserPlus className="h-4 w-4" />
+                    Criar Conta
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href="/login" className="flex items-center gap-2 cursor-pointer">
+                    <LogIn className="h-4 w-4" />
+                    Fazer Login
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <a href="/meus-pedidos" className="flex items-center gap-2 cursor-pointer">
+                    <Package className="h-4 w-4" />
+                    Meus Pedidos
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href="/minha-conta" className="flex items-center gap-2 cursor-pointer">
+                    <Settings className="h-4 w-4" />
+                    Minha Conta
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <a href="/admin" className="flex items-center gap-2 cursor-pointer text-muted-foreground">
+                    <Settings className="h-4 w-4" />
+                    Área Administrativa
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Cart
               trigger={
                 <Button
@@ -71,7 +124,13 @@ export default function Header() {
                 </Button>
               }
             />
-            <Button variant="ghost" size="sm" className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden text-white"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
               {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
           </div>
@@ -82,7 +141,50 @@ export default function Header() {
             <nav className="flex flex-col space-y-4">
               <a href="#home" className="text-white hover:text-yellow-400 transition-colors" onClick={() => setIsMenuOpen(false)}>Início</a>
               <a href="#produtos" className="text-white hover:text-yellow-400 transition-colors" onClick={() => setIsMenuOpen(false)}>Produtos</a>
-              <a href="/admin" className="text-gray-300 hover:text-yellow-400 transition-colors text-sm" onClick={() => setIsMenuOpen(false)}>Admin</a>
+              <div className="border-t border-border pt-4 mt-4">
+                <p className="text-white text-sm font-medium text-muted-foreground mb-2">Conta</p>
+                <a
+                  href="/cadastro"
+                  className="text-gray-300 text-foreground hover:text-primary transition-colors flex items-center gap-2 mb-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Criar Conta
+                </a>
+                <a
+                  href="/sign-in"
+                  className="text-gray-300 text-foreground hover:text-primary transition-colors flex items-center gap-2 mb-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <LogIn className="h-4 w-4" />
+                  Fazer Login
+                </a>
+                <a
+                  href="/meus-pedidos"
+                  className="text-gray-300 text-foreground hover:text-primary transition-colors flex items-center gap-2 mb-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Package className="h-4 w-4" />
+                  Meus Pedidos
+                </a>
+                <a
+                  href="/minha-conta"
+                  className="text-gray-300 text-foreground hover:text-primary transition-colors flex items-center gap-2 mb-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Settings className="h-4 w-4" />
+                  Minha Conta
+                </a>
+                <a
+                  href="/admin"
+                  className="text-gray-100 text-muted-foreground hover:text-primary transition-colors text-sm flex items-center gap-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Settings className="h-4 w-4" />
+                  Área Administrativa
+                </a>
+              </div>
+            
             </nav>
           </div>
         )}

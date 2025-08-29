@@ -36,7 +36,7 @@ export default function AdminPage() {
           </TabsContent>
 
           <TabsContent value="orders">
-            <OrderManagement orders={[]} />
+            <OrderManagement />
           </TabsContent>
 
           <TabsContent value="stock">
