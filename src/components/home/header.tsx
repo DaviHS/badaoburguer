@@ -56,7 +56,7 @@ export default function Header() {
           </div>
 
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="" className="text-white hover:text-yellow-400 transition-colors">Início</a>
+            <a href="/" className="text-white hover:text-yellow-400 transition-colors">Início</a>
             <a href="#produtos" className="text-white hover:text-yellow-400 transition-colors">Produtos</a>
           </nav>
 
