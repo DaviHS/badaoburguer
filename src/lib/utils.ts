@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
-export const FILTER_STORAGE_KEY = "call-filters";
+export const FILTER_STORAGE_KEY = "cart";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

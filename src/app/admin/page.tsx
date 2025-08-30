@@ -9,7 +9,7 @@ import { UserManagement } from "@/components/admin/user-management"
 
 export default function AdminPage() {
   return (
-    <div className="min-h-screen bg-secundary">
+    <div className="min-h-screen">
       <main className="container mx-auto py-8">
         <Tabs defaultValue="products" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">

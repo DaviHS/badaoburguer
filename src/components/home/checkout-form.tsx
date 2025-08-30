@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { api } from "@/trpc/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,7 +19,9 @@ interface CheckoutFormProps {
 }
 
 export function CheckoutForm({ onClose }: CheckoutFormProps) {
+  const { data: session } = useSession()
   const { state, dispatch } = useCart()
+
   const [customerName, setCustomerName] = useState("")
   const [customerPhone, setCustomerPhone] = useState("")
   const [paymentMethod, setPaymentMethod] = useState<"dinheiro" | "pix" | "cartao">("pix")
@@ -28,11 +31,18 @@ export function CheckoutForm({ onClose }: CheckoutFormProps) {
   const createOrder = api.order.create.useMutation()
   const total = state.items.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0)
 
+  useEffect(() => {
+    if (session?.user) {
+      setCustomerName(session.user.fullName || "")
+      setCustomerPhone(session.user.phone || "")
+    }
+  }, [session])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!customerName.trim() || !customerPhone.trim()) {
-      toast.error("Preencha seu nome e telefone.")
+      toast.error("Preencha seu nome e telefone antes de continuar.")
       return
     }
 
@@ -46,7 +56,6 @@ export function CheckoutForm({ onClose }: CheckoutFormProps) {
 
     try {
       const { orderId } = await createOrder.mutateAsync({
-        userId: 1,
         items: state.items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -94,9 +103,21 @@ _"O Melhor tem Nome"_`
     }
   }
 
+  if (!session?.user) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="flex flex-col items-center justify-center text-center min-h-[200px]">
+          <p className="text-base mb-3">Para finalizar seu pedido, faça login ou cadastro.</p>
+          <Button onClick={() => (window.location.href = "/sign-in")}>
+            Login / Cadastro
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      {/* Dados do Cliente */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -127,7 +148,6 @@ _"O Melhor tem Nome"_`
         </CardContent>
       </Card>
 
-      {/* Forma de Pagamento */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -135,10 +155,7 @@ _"O Melhor tem Nome"_`
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <RadioGroup
-            value={paymentMethod}
-            onValueChange={(value) => setPaymentMethod(value as typeof paymentMethod)}
-          >
+          <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as typeof paymentMethod)}>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="pix" id="pix" />
               <Label htmlFor="pix" className="flex items-center gap-2 cursor-pointer">
@@ -154,14 +171,13 @@ _"O Melhor tem Nome"_`
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="cartao" id="cartao" />
               <Label htmlFor="cartao" className="flex items-center gap-2 cursor-pointer">
-                <CreditCard className="h-4 w-4" /> Cartão (Débito/Crédito)
+                <CreditCard className="h-4 w-4" /> Cartão
               </Label>
             </div>
           </RadioGroup>
         </CardContent>
       </Card>
 
-      {/* Observações */}
       <Card>
         <CardHeader>
           <CardTitle>Observações (Opcional)</CardTitle>
@@ -176,7 +192,6 @@ _"O Melhor tem Nome"_`
         </CardContent>
       </Card>
 
-      {/* Resumo do Pedido */}
       <Card>
         <CardHeader>
           <CardTitle>Resumo do Pedido</CardTitle>

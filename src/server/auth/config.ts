@@ -28,6 +28,7 @@ declare module "@auth/core/jwt" {
   interface JWT {
     userId: number;
     fullName: string;
+    phone: string;
     email: string;
     roleId: number;
     isAdmin: boolean;
@@ -52,6 +53,7 @@ declare module "next-auth" {
   interface User {
     userId: number;
     fullName: string;
+    phone: string;
     email: string;
     roleId: number;
     isAdmin: boolean;
@@ -89,6 +91,7 @@ export const authConfig = {
           .select({
             userId: users.userId,
             fullName: users.fullName,
+            phone: users.phone,
             email: users.email,
             roleId: users.roleId,
             passwordHash: users.passwordHash,
@@ -112,6 +115,7 @@ export const authConfig = {
         return {
           userId: user.userId,
           fullName: user.fullName,
+          phone: user.phone!,
           email: user.email,
           roleId: user.roleId!,
           isAdmin: user.isAdmin!
@@ -146,6 +150,7 @@ export const authConfig = {
           id: token.sub,
           userId: token.userId,
           fullName: token.fullName,
+          phone: token.phone,
           email: token.email,
           roleId: token.roleId,
           isAdmin: token.isAdmin,

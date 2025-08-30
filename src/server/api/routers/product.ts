@@ -7,7 +7,11 @@ import { productSchema, productUpdateSchema } from "@/validators/product";
 
 export const productRouter = createTRPCRouter({
   list: publicProcedure.query(async () => {
-    return await db.select().from(products).orderBy(products.name);
+    return await db
+      .select()
+      .from(products)
+      .where(eq(products.status, 1)) 
+      .orderBy(products.name);
   }),
 
   getById: publicProcedure
@@ -99,7 +103,11 @@ export const productRouter = createTRPCRouter({
   delete: publicProcedure
     .input(z.object({ productId: z.number() }))
     .mutation(async ({ input }) => {
-      await db.delete(products).where(eq(products.productId, input.productId));
+      await db
+        .update(products)
+        .set({ status: 0 }) // 👈 muda o status de ativo (1) para inativo (0)
+        .where(eq(products.productId, input.productId));
+
       return { success: true };
     }),
 });

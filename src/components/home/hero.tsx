@@ -4,7 +4,7 @@ import Image from "next/image"
 
 export function Hero() {
   return (
-    <section className="relative bg-gradient-to-b from-[#4d0f2e] via-[#6a1b40] to-white py-10 md:py-15 overflow-hidden">
+    <section className="relative bg-gradient-to-b from-[#4d0f2e] via-[#6a1b40] to-yellow-50 py-10 md:py-15 overflow-hidden">
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">

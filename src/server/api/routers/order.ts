@@ -89,7 +89,6 @@ export const orderRouter = createTRPCRouter({
   create: publicProcedure
     .input(
       z.object({
-        userId: z.number(),
         items: z.array(
           z.object({
             productId: z.number(),
@@ -98,7 +97,7 @@ export const orderRouter = createTRPCRouter({
         ),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       let total = 0
 
       // Validar produtos e calcular total
@@ -107,9 +106,9 @@ export const orderRouter = createTRPCRouter({
 
         const product = productsFound[0]
         if (!product) throw new Error(`Produto ${item.productId} não encontrado`)
-        if (product.stock < item.quantity) {
-          throw new Error(`Estoque insuficiente para ${product.name}`)
-        }
+        // if (product.stock < item.quantity) {
+        //   throw new Error(`Estoque insuficiente para ${product.name}`)
+        // }
 
         total += Number(product.price) * item.quantity
       }
@@ -118,7 +117,7 @@ export const orderRouter = createTRPCRouter({
       const createdOrders = await db
         .insert(orders)
         .values({
-          userId: input.userId,
+          userId: ctx.session?.user.userId,
           total: total.toString(),
           status: 0, // Pendente
         })

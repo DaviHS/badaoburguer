@@ -32,5 +32,5 @@ export const isNoNeedProcess = (request: NextRequest): boolean => {
 
 export const logoutAndClearFilters = async () => {
   localStorage.removeItem(FILTER_STORAGE_KEY); 
-  await signOut({ callbackUrl: `/sign-in` }); 
+  await signOut({ callbackUrl: `/` }); 
 };

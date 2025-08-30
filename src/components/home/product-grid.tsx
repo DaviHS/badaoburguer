@@ -29,7 +29,6 @@ export default function ProductGrid() {
 
   return (
     <section id="produtos" className="space-y-8">
-      {/* Filtro por categoria */}
       <div className="flex flex-wrap gap-4 justify-center">
         <Button
           variant={selectedCategory === "all" ? "default" : "outline"}
@@ -104,11 +103,10 @@ export default function ProductGrid() {
               <CardFooter className="p-4 pt-0">
                 <Button
                   onClick={() => handleAddToCart(product)}
-                  disabled={product.stock === 0}
                   className="w-full flex items-center gap-2"
                 >
                   <Plus className="h-4 w-4" />
-                  {product.stock === 0 ? "Sem Estoque" : "Adicionar ao Carrinho"}
+                  Adicionar ao Carrinho
                 </Button>
               </CardFooter>
             </Card>

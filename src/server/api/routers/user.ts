@@ -30,6 +30,16 @@ export const userRouter = createTRPCRouter({
 
   create: publicProcedure.input(userSchema).mutation(async ({ input }) => {
     const { fullName, email, phone, cpf, birthDate, password, status, roleId } = input
+
+    const existingCpf = await db.select().from(users).where(eq(users.cpf, cpf!)).limit(1)
+    if (existingCpf.length > 0) throw new Error("Já existe um usuário cadastrado com este CPF")
+
+    const existingEmail = await db.select().from(users).where(eq(users.email, email)).limit(1)
+    if (existingEmail.length > 0) throw new Error("Já existe um usuário cadastrado com este email")
+
+    const existingPhone = await db.select().from(users).where(eq(users.phone, phone!)).limit(1)
+    if (existingPhone.length > 0) throw new Error("Já existe um usuário cadastrado com este telefone")
+
     const passwordHash = await hash(password, 10)
 
     const [user] = await db
