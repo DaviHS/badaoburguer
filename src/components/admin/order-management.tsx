@@ -12,6 +12,7 @@ import { getStatusInfo, translateStatusName } from "@/lib/utils/status"
 import { LoadingSkeleton } from "@/components/shared/loading"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/utils/price"
+import { formatOrderId } from "@/lib/utils/format"
 
 export function OrderManagement() {
   const { data: ordersData = [], refetch, isLoading } = api.order.list.useQuery()
@@ -116,7 +117,7 @@ export function OrderManagement() {
                 <Card key={order.orderId} className="border-l-4 border-l-primary/20">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Pedido #{order.orderId}</CardTitle>
+                      <CardTitle className="text-lg">Pedido #{formatOrderId(order.orderId)}</CardTitle>
                       <Badge
                         className={`flex items-center gap-1 ${statusInfo.bgColor} ${statusInfo.iconColor}`}
                       >

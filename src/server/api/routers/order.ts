@@ -86,6 +86,48 @@ export const orderRouter = createTRPCRouter({
     return { ...order, items }
   }),
 
+  listByUser: publicProcedure.query(async ({ ctx }) => {
+    if (!ctx.session?.user?.userId) throw new Error("Usuário não autenticado")
+    const userId = ctx.session.user.userId
+
+    const userOrders = await db
+      .select({
+        orderId: orders.orderId,
+        total: orders.total,
+        status: orders.status,
+        createdAt: orders.createdAt,
+        updatedAt: orders.updatedAt,
+        statusName: orderStatus.name,
+      })
+      .from(orders)
+      .leftJoin(orderStatus, eq(orders.status, orderStatus.statusId))
+      .where(eq(orders.userId, userId))
+      .orderBy(desc(orders.createdAt))
+
+    const ordersWithItems = await Promise.all(
+      userOrders.map(async (order) => {
+        const items = await db
+          .select({
+            orderItemId: orderItems.orderItemId,
+            productId: orderItems.productId,
+            quantity: orderItems.quantity,
+            price: orderItems.price,
+            productName: products.name,
+          })
+          .from(orderItems)
+          .leftJoin(products, eq(orderItems.productId, products.productId))
+          .where(eq(orderItems.orderId, order.orderId))
+
+        return {
+          ...order,
+          items,
+        }
+      }),
+    )
+
+    return ordersWithItems
+  }),
+
   create: publicProcedure
     .input(
       z.object({
@@ -113,21 +155,19 @@ export const orderRouter = createTRPCRouter({
         total += Number(product.price) * item.quantity
       }
 
-      // Criar pedido
       const createdOrders = await db
         .insert(orders)
         .values({
           userId: ctx.session?.user.userId,
           total: total.toString(),
-          status: 0, // Pendente
+          status: 0,
         })
         .returning()
 
       const order = createdOrders[0]
       if (!order) throw new Error("Falha ao criar pedido")
 
-      // Criar itens do pedido e atualizar estoque
-      for (const item of input.items) {
+       for (const item of input.items) {
         const productsFound = await db.select().from(products).where(eq(products.productId, item.productId))
 
         const product = productsFound[0]
@@ -157,13 +197,11 @@ export const orderRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      // Validar se status existe
       const statuses = await db.select().from(orderStatus).where(eq(orderStatus.statusId, input.statusId))
 
       const status = statuses[0]
       if (!status) throw new Error("Status inválido")
 
-      // Atualizar pedido
       const updatedOrders = await db
         .update(orders)
         .set({

@@ -43,3 +43,7 @@ export  const formatCPF = (value: string) =>
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d{1,2})/, "$1-$2")
       .replace(/(-\d{2})\d+?$/, "$1")
+
+export function formatOrderId(id: number) {
+  return `BADAO-${id.toString().padStart(6, "0")}`
+}

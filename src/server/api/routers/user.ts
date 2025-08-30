@@ -2,7 +2,7 @@ import { createTRPCRouter, publicProcedure } from "@/server/api/trpc"
 import { users } from "@/server/db/schema"
 import { userSchema, userUpdateSchema } from "@/validators/user"
 import { db } from "@/server/db"
-import { hash } from "bcrypt-ts"
+import { compare, hash } from "bcrypt-ts"
 import { eq, isNull } from "drizzle-orm"
 import { z } from "zod"
 
@@ -88,4 +88,23 @@ export const userRouter = createTRPCRouter({
 
     return { success: true }
   }),
+
+  changePassword: publicProcedure
+    .input(
+      z.object({
+        userId: z.number(),
+        currentPassword: z.string().min(6),
+        newPassword: z.string().min(6),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { userId, currentPassword, newPassword } = input
+      const [user] = await db.select().from(users).where(eq(users.userId, userId)).limit(1)
+      if (!user) throw new Error("Usuário não encontrado")
+      const isMatch = await compare(currentPassword, user.passwordHash)
+      if (!isMatch) throw new Error("Senha atual incorreta")
+      const newPasswordHash = await hash(newPassword, 10)
+      await db.update(users).set({ passwordHash: newPasswordHash, updatedAt: new Date() }).where(eq(users.userId, userId))
+      return { success: true }
+    }),
 })

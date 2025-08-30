@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
@@ -17,14 +17,6 @@ export default function Form() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-
-  // Ao montar o componente, checa se existe carrinho no localStorage
-  useEffect(() => {
-    const cart = localStorage.getItem("cart")
-    if (cart) {
-      router.replace("/?checkout=true")
-    }
-  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
