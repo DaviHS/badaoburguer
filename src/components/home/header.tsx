@@ -70,7 +70,6 @@ export default function Header() {
                   <User className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-
               <DropdownMenuContent align="end" className="w-56">
                 {!session?.user && (
                   <>
@@ -89,26 +88,30 @@ export default function Header() {
 
                 {session?.user && (
                   <>
-                    {session.user.isAdmin && (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <a href="/admin" className="flex items-center gap-2 cursor-pointer">
-                            <Shield className="h-4 w-4" /> Área Administrativa
-                          </a>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
-
-                    <DropdownMenuItem asChild className="cursor-default select-none">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                        <User className="h-4 w-4" /> {session.user.fullName}
-                      </div>
+                    <DropdownMenuItem asChild>
+                      <a href="/meus-pedidos" className="flex items-center gap-2 cursor-pointer">
+                        <Package className="h-4 w-4" /> Meus Pedidos
+                      </a>
                     </DropdownMenuItem>
-
+                    <DropdownMenuItem asChild>
+                      <a href="/minha-conta" className="flex items-center gap-2 cursor-pointer">
+                        <Settings className="h-4 w-4" /> Minha Conta
+                      </a>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 cursor-pointer">
                       <LogOut className="h-4 w-4" /> Sair
+                    </DropdownMenuItem>
+                  </>
+                )}
+
+                {session?.user?.isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <a href="/admin" className="flex items-center gap-2 cursor-pointer">
+                        <Shield className="h-4 w-4" /> Área Administrativa
+                      </a>
                     </DropdownMenuItem>
                   </>
                 )}
@@ -163,21 +166,21 @@ export default function Header() {
                 )}
                 {session?.user && (
                   <>
-                    {session.user.isAdmin && (
-                      <>
-                        <a href="/admin" className="text-gray-300 hover:text-primary flex items-center gap-2 mb-2 text-sm" onClick={() => setIsMenuOpen(false)}>
-                          <Shield className="h-4 w-4" /> Área Administrativa
-                        </a>
-                        <div className="border-t border-border mt-2 mb-2"></div>
-                      </>
-                    )}
-                    <div className="mt-2 px-4 py-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                      <User className="h-4 w-4" /> {session.user.fullName}
-                    </div>
+                    <a href="/meus-pedidos" className="text-gray-300 hover:text-primary flex items-center gap-2 mb-2" onClick={() => setIsMenuOpen(false)}>
+                      <Package className="h-4 w-4" /> Meus Pedidos
+                    </a>
+                    <a href="/minha-conta" className="text-gray-300 hover:text-primary flex items-center gap-2 mb-2" onClick={() => setIsMenuOpen(false)}>
+                      <Settings className="h-4 w-4" /> Minha Conta
+                    </a>
                     <a onClick={handleLogout} className="text-gray-300 hover:text-primary flex items-center gap-2 mb-2 cursor-pointer">
                       <LogOut className="h-4 w-4" /> Sair
                     </a>
                   </>
+                )}
+                {session?.user?.isAdmin && (
+                  <a href="/admin" className="text-gray-300 hover:text-primary flex items-center gap-2 text-sm" onClick={() => setIsMenuOpen(false)}>
+                    <Shield className="h-4 w-4" /> Área Administrativa
+                  </a>
                 )}
               </div>
             </nav>
