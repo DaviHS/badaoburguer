@@ -1,5 +1,3 @@
-"use client";
-
 import { Hero } from "@/components/home/hero"
 import { Header, ProductGrid, Footer } from "@/components/home/index"
 import Cart from "@/components/home/cart"

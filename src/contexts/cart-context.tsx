@@ -3,7 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from "react"
 import type { Product, CartItem } from "@/types"
-import { parsePrice } from "./utils/price"
+import { parsePrice } from "../lib/utils/price"
 
 interface CartState {
   items: CartItem[]
@@ -34,7 +34,14 @@ function cartReducer(state: CartState, action: CartAction): CartState {
             : item
         )
       } else {
-        updatedItems = [...state.items, { ...action.payload, quantity: 1 }]
+        updatedItems = [
+          ...state.items,
+          {
+            ...action.payload,
+            photos: action.payload.photos ?? [{ id: 0, url: "/placeholder.svg", filename: "placeholder" }],
+            quantity: 1
+          }
+        ]
       }
 
       return {

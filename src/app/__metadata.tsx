@@ -13,4 +13,5 @@ export const metadata: Metadata = {
       url: "/favicon.ico",
     },
   ],
+  manifest:"/manifest.json"
 };

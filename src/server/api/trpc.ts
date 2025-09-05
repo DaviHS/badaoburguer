@@ -1,14 +1,16 @@
+// server/api/trpc.ts
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "@/server/auth";
 import { db } from "../db";
+import { initializeAppServices } from "@/lib/init-notifications";
+
+initializeAppServices();
 
 /**
  * 1. CONTEXT
- *
- * Define o contexto com sessão e banco de dados
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await auth();
@@ -66,6 +68,27 @@ export const protectedProcedure = t.procedure
     if (!ctx.session || !ctx.session.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
+    return next({
+      ctx: {
+        session: { ...ctx.session, user: ctx.session.user },
+      },
+    });
+  });
+
+// ✅ Novo adminProcedure
+export const adminProcedure = protectedProcedure
+  .use(({ ctx, next }) => {
+    // Verifique se o usuário é admin baseado no seu schema
+    // Isso depende de como você armazena roles no seu sistema
+    const isAdmin = ctx.session.user.isAdmin; // Fallback
+
+    if (!isAdmin) {
+      throw new TRPCError({ 
+        code: "FORBIDDEN",
+        message: "Acesso restrito a administradores" 
+      });
+    }
+    
     return next({
       ctx: {
         session: { ...ctx.session, user: ctx.session.user },

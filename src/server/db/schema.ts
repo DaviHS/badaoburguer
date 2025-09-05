@@ -1,4 +1,15 @@
-import { pgTable, serial, varchar, text, numeric, integer, boolean, timestamp, smallint } from "drizzle-orm/pg-core"
+import { 
+  pgTable, 
+  serial, 
+  varchar, 
+  text, 
+  numeric, 
+  integer, 
+  boolean, 
+  timestamp, 
+  smallint, 
+  jsonb
+} from "drizzle-orm/pg-core"
 
 export const users = pgTable("users", {
   userId: serial("user_id").primaryKey(),
@@ -58,11 +69,11 @@ export const products = pgTable("products", {
 export const productImages = pgTable("product_images", {
   imageId: serial("image_id").primaryKey(),
   productId: integer("product_id").references(() => products.productId).notNull(),
-  url: text("url").notNull(), // URL do arquivo armazenado pelo UploadThing
+  url: text("url").notNull(), 
   fileName: varchar("file_name", { length: 200 }),
-  fileSize: integer("file_size"), // em bytes
-  order: integer("order").default(0), // nova coluna para definir a ordem das imagens
-  status: smallint("status").default(1), // 0=inativo, 1=ativo
+  fileSize: integer("file_size"), 
+  order: integer("order").default(0), 
+  status: smallint("status").default(1), 
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow(),
 }); 
@@ -74,6 +85,10 @@ export const orders = pgTable("orders", {
   status: smallint("status")
     .references(() => orderStatus.statusId)
     .default(0),
+  paymentMethod: varchar("payment_method", { length: 50 }),
+  observations: text("observations"),
+  paymentId: varchar("payment_id", { length: 255 }),
+  paymentStatus: varchar("payment_status", { length: 50 }),
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow(),
 })
@@ -95,3 +110,16 @@ export const orderStatus = pgTable("order_status", {
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow(),
 })
+
+export const userPushSubscriptions = pgTable('user_push_subscriptions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.userId, { onDelete: 'cascade' }),
+  endpoint: varchar('endpoint', { length: 500 }).notNull(),
+  p256dh: varchar('p256dh', { length: 500 }).notNull(),
+  auth: varchar('auth', { length: 500 }).notNull(),
+  userAgent: varchar('user_agent', { length: 500 }),
+  createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true }).defaultNow(),
+});
+
+export type UserPushSubscription = typeof userPushSubscriptions.$inferSelect;

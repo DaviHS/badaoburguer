@@ -4,8 +4,19 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingCart, Menu, X, User, UserPlus, Settings, LogIn, Package, Shield, LogOut } from "lucide-react"
-import { useCart } from "@/lib/cart-context"
+import { 
+  ShoppingCart, 
+  Menu, 
+  X, 
+  User, 
+  UserPlus, 
+  Settings, 
+  LogIn, 
+  Package, 
+  Shield, 
+  LogOut
+} from "lucide-react"
+import { useCart } from "@/contexts/cart-context"
 import Image from "next/image"
 import Cart from "./cart"
 import {
@@ -16,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { logoutAndClearFilters } from "@/lib/auth"
+import { WebPushRegister } from "@/components/shared/web-push-register" // ← Importe o componente
 
 export default function Header() {
   const { state } = useCart()
@@ -60,6 +72,12 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center space-x-2">
+            {session?.user && (
+              <div className="hidden md:flex">
+                <WebPushRegister />
+              </div>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -89,19 +107,15 @@ export default function Header() {
                 {session?.user && (
                   <>
                     <DropdownMenuItem asChild>
-                      <a href="/meus-pedidos" className="flex items-center gap-2 cursor-pointer">
+                      <a href="/my-orders" className="flex items-center gap-2 cursor-pointer">
                         <Package className="h-4 w-4" /> Meus Pedidos
                       </a>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <a href="/minha-conta" className="flex items-center gap-2 cursor-pointer">
+                      <a href="/account" className="flex items-center gap-2 cursor-pointer">
                         <Settings className="h-4 w-4" /> Minha Conta
                       </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 cursor-pointer">
-                      <LogOut className="h-4 w-4" /> Sair
-                    </DropdownMenuItem>
+                    </DropdownMenuItem>                    
                   </>
                 )}
 
@@ -112,6 +126,14 @@ export default function Header() {
                       <a href="/admin" className="flex items-center gap-2 cursor-pointer">
                         <Shield className="h-4 w-4" /> Área Administrativa
                       </a>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {session?.user && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 cursor-pointer">
+                      <LogOut className="h-4 w-4" /> Sair
                     </DropdownMenuItem>
                   </>
                 )}
@@ -136,9 +158,9 @@ export default function Header() {
             />
 
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="md:hidden text-white"
+              className="md:hidden relative bg-transparent border-white text-white hover:bg-white hover:text-[#4d0f2e] transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -149,7 +171,7 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-[#3a0b20]">
             <nav className="flex flex-col space-y-4">
-              <a href="#home" className="text-white hover:text-yellow-400 transition-colors" onClick={() => setIsMenuOpen(false)}>Início</a>
+              <a href="/" className="text-white hover:text-yellow-400 transition-colors" onClick={() => setIsMenuOpen(false)}>Início</a>
               <a href="#produtos" className="text-white hover:text-yellow-400 transition-colors" onClick={() => setIsMenuOpen(false)}>Produtos</a>
 
               <div className="border-t border-border pt-4 mt-4">
@@ -166,23 +188,37 @@ export default function Header() {
                 )}
                 {session?.user && (
                   <>
-                    <a href="/meus-pedidos" className="text-gray-300 hover:text-primary flex items-center gap-2 mb-2" onClick={() => setIsMenuOpen(false)}>
+                    <a href="/my-orders" className="text-gray-300 hover:text-primary flex items-center gap-2 mb-2" onClick={() => setIsMenuOpen(false)}>
                       <Package className="h-4 w-4" /> Meus Pedidos
                     </a>
-                    <a href="/minha-conta" className="text-gray-300 hover:text-primary flex items-center gap-2 mb-2" onClick={() => setIsMenuOpen(false)}>
+                    <a href="/account" className="text-gray-300 hover:text-primary flex items-center gap-2 mb-2" onClick={() => setIsMenuOpen(false)}>
                       <Settings className="h-4 w-4" /> Minha Conta
-                    </a>
-                    <a onClick={handleLogout} className="text-gray-300 hover:text-primary flex items-center gap-2 mb-2 cursor-pointer">
-                      <LogOut className="h-4 w-4" /> Sair
                     </a>
                   </>
                 )}
                 {session?.user?.isAdmin && (
-                  <a href="/admin" className="text-gray-300 hover:text-primary flex items-center gap-2 text-sm" onClick={() => setIsMenuOpen(false)}>
+                  <a href="/admin" className="text-gray-300 hover:text-primary flex items-center gap-2 text-sm mb-2" onClick={() => setIsMenuOpen(false)}>
                     <Shield className="h-4 w-4" /> Área Administrativa
                   </a>
                 )}
+                {session?.user && (
+                  <>
+                    <a onClick={handleLogout} className="text-gray-300 hover:text-primary flex items-center gap-2 cursor-pointer">
+                      <LogOut className="h-4 w-4" /> Sair
+                    </a>
+                  </>
+                )}
               </div>
+              {session?.user && (
+                <div className="border-t border-border pt-4 mt-4">
+                  <p className="text-white text-sm font-medium text-muted-foreground mb-2">Notificações</p>
+                  
+                    <>
+                      <WebPushRegister />
+                    </>
+                  
+                </div>
+              )}
             </nav>
           </div>
         )}

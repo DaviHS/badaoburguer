@@ -13,11 +13,12 @@ import { LoadingSkeleton } from "@/components/shared/loading"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/utils/price"
 import { formatOrderId } from "@/lib/utils/format"
+import { OrderStatusService } from "@/services/order-status-service"
 
 export function OrderManagement() {
   const { data: ordersData = [], refetch, isLoading } = api.order.list.useQuery()
   const { data: statusList = [] } = api.order.getStatuses.useQuery()
-  
+  const getNextStatusesQuery = api.order.getNextStatuses.useQuery;
   const updateStatusMutation = api.order.updateStatus.useMutation()
 
   const [filterStatus, setFilterStatus] = useState<string>("all")
@@ -33,21 +34,51 @@ export function OrderManagement() {
     return matchesStatus && matchesSearch
   })
 
-  const handleStatusChange = (orderId: number, newStatusId: number) => {
-    const toastId = toast.loading("Atualizando...")
-    updateStatusMutation.mutate(
-      { orderId, statusId: newStatusId },
-      {
-        onSuccess: () => {
-          refetch()
-          toast.success("Status do pedido atualizado!", { id: toastId })
-        },
-        onError: (error) => {
-          toast.error(error.message || "Erro ao atualizar status.", { id: toastId })
-        },
+  const handleStatusChange = async (orderId: number, newStatusId: number) => {
+    const toastId = toast.loading("Verificando...");
+    
+    try {
+      const order = ordersData.find(o => o.orderId === orderId);
+      if (!order) throw new Error("Pedido não encontrado");
+
+      const possibleStatuses = OrderStatusService.getNextPossibleStatuses(order.status!);
+
+      if (!possibleStatuses.includes(newStatusId)) {
+        throw new Error("Esta transição de status não é permitida");
       }
-    )
-  }
+
+      if (newStatusId === 6) { 
+        const confirmed = window.confirm(
+          "Tem certeza que deseja cancelar este pedido? Esta ação não pode ser desfeita."
+        );
+        if (!confirmed) {
+          toast.dismiss(toastId);
+          return;
+        }
+      }
+
+      // // Se for entrega, pedir informações adicionais
+      // if (newStatusId === 4) { // Entregando
+      //   // Aqui você pode abrir um modal para coletar info do entregador, etc.
+      // }
+
+      updateStatusMutation.mutate(
+        { orderId, statusId: newStatusId },
+        {
+          onSuccess: () => {
+            refetch();
+            toast.success("Status do pedido atualizado!", { id: toastId });
+          },
+          onError: (error) => {
+            toast.error(error.message, { id: toastId });
+          },
+        }
+      );
+
+    } catch (error: any) {
+      toast.error(error.message, { id: toastId });
+    }
+  };
 
   const stats = {
     total: ordersData.length,
@@ -174,17 +205,21 @@ export function OrderManagement() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      {statusList.slice(0, 5).map((status) => (
-                        <Button
-                          key={status.statusId}
-                          variant={order.status === status.statusId ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleStatusChange(order.orderId, status.statusId)}
-                          disabled={order.status === status.statusId}
-                        >
-                          {translateStatusName(status.name)}
-                        </Button>
-                      ))}
+                      {statusList
+                        .filter(status => 
+                          OrderStatusService.canTransition(order.status!, status.statusId)
+                        )
+                        .map((status) => (
+                          <Button
+                            key={status.statusId}
+                            variant={order.status === status.statusId ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleStatusChange(order.orderId, status.statusId)}
+                            disabled={order.status === status.statusId}
+                          >
+                            {translateStatusName(status.name)}
+                          </Button>
+                        ))}
                     </div>
                   </CardContent>
                 </Card>

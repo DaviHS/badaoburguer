@@ -1,4 +1,4 @@
-import { Clock, CheckCircle, Truck, Package, Ban } from "lucide-react"
+import { Clock, CheckCircle, Truck, Package, Ban, HelpCircle, ChefHat, CreditCard } from "lucide-react"
 import { ReactNode } from "react"
 
 export type StatusInfo = {
@@ -11,7 +11,7 @@ export type StatusInfo = {
 
 export const getStatusInfo = (statusId: number | null): StatusInfo => {
   switch (statusId) {
-    case 0: // Pendente
+    case 0:
       return { 
         label: "Pendente", 
         variant: "destructive", 
@@ -19,31 +19,47 @@ export const getStatusInfo = (statusId: number | null): StatusInfo => {
         bgColor: "bg-red-100", 
         iconColor: "text-red-600" 
       }
-    case 1: // Pago
+    case 1:
       return { 
         label: "Pago", 
         variant: "secondary", 
-        icon: <Package className="h-4 w-4" />, 
+        icon: <CreditCard className="h-4 w-4" />, 
         bgColor: "bg-blue-100", 
         iconColor: "text-blue-600" 
       }
-    case 2: // Enviado
+    case 2:
       return { 
-        label: "Enviado", 
+        label: "Preparando", 
         variant: "default", 
-        icon: <Truck className="h-4 w-4" />, 
+        icon: <ChefHat className="h-4 w-4" />, 
         bgColor: "bg-yellow-100", 
         iconColor: "text-yellow-600" 
       }
-    case 3: // Entregue
+    case 3: 
+      return { 
+        label: "Pronto", 
+        variant: "default", 
+        icon: <Package className="h-4 w-4" />, 
+        bgColor: "bg-orange-100", 
+        iconColor: "text-orange-600" 
+      }
+    case 4: 
+      return { 
+        label: "Saiu para Entrega", 
+        variant: "default", 
+        icon: <Truck className="h-4 w-4" />, 
+        bgColor: "bg-purple-100", 
+        iconColor: "text-purple-600" 
+      }
+    case 5: 
       return { 
         label: "Entregue", 
         variant: "default", 
-        icon: <CheckCircle className="h-4 w-4 text-white" />, 
-        bgColor: "bg-green-600", 
-        iconColor: "text-white" 
+        icon: <CheckCircle className="h-4 w-4" />, 
+        bgColor: "bg-green-100", 
+        iconColor: "text-green-600" 
       }
-    case 4: // Cancelado
+    case 6: 
       return { 
         label: "Cancelado", 
         variant: "destructive", 
@@ -55,24 +71,28 @@ export const getStatusInfo = (statusId: number | null): StatusInfo => {
       return { 
         label: "Desconhecido", 
         variant: "outline", 
-        icon: null, 
+        icon: <HelpCircle className="h-4 w-4" />, 
         bgColor: "bg-gray-100", 
         iconColor: "text-gray-600" 
       }
   }
-}
+};
 
 export const translateStatusName = (statusName: string): string => {
   switch (statusName) {
-    case "Pending":
+    case "pending":
       return "Pendente"
-    case "Paid":
+    case "paid":
       return "Pago"
-    case "Shipped":
-      return "Enviado"
-    case "Delivered":
+    case "preparing":
+      return "Preparando"
+    case "ready":
+      return "Pronto"
+    case "delivering":
+      return "Saiu para Entrega"
+    case "delivered":
       return "Entregue"
-    case "Cancelled":
+    case "cancelled":
       return "Cancelado"
     default:
       return statusName

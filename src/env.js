@@ -13,6 +13,10 @@ export const env = createEnv({
         : z.string().optional(),
     DATABASE_URL: z.string().url(),
     UPLOADTHING_TOKEN: z.string(),
+    MP_PUBLIC_KEY: z.string(),
+    MP_ACCESS_TOKEN: z.string(),
+    VAPID_PUBLIC_KEY: z.string(),
+    VAPID_PRIVATE_KEY: z.string(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -35,6 +39,10 @@ export const env = createEnv({
     AUTH_SECRET: process.env.AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
+    MP_PUBLIC_KEY: process.env.MP_PUBLIC_KEY,
+    MP_ACCESS_TOKEN: process.env.MP_ACCESS_TOKEN,
+    VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
     NODE_ENV: process.env.NODE_ENV,
 
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
